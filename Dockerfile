@@ -1,17 +1,28 @@
-FROM parity/parity:v1.9.7
+FROM keydonix/parity-instantseal
 
-ADD ./key.json /tmp/keystore/
+ENV PATH="/build/artifacts/bin:${PATH}" \
+	ETH_RPC_URL=http://localhost:8545 \
+	ETH_KEYSTORE=/tmp/keystore/ \
+	ETH_PASSWORD="/tmp/password" \
+	ETH_FROM=0x913dA4198E6bE1D5f5E4a40D0667f70C0B5430Eb
+ADD ./key.json $ETH_KEYSTORE
+
 ADD ./setup_8.x /tmp/
+ADD ./setup-maker /tmp/
 
+# You MUST encrypt your keystore file (and password must be in a file)
+RUN echo "password" > $ETH_PASSWORD
+
+# TODO: better node installation?
 RUN bash /tmp/setup_8.x
 
 WORKDIR /build
 
-RUN apt-get -y install software-properties-common git bc nodejs build-essential && \
+RUN apt-get -y install software-properties-common git bc nodejs cargo build-essential libjansson-dev && \
 	add-apt-repository ppa:ethereum/ethereum && \
 	add-apt-repository ppa:gophers/archive && \
 	apt-get update && \
-	apt-get install -y solc libjansson-dev golang-1.8 cargo
+	apt-get install -y solc libjansson-dev golang-1.8
 
 RUN git clone https://github.com/makerdao/sai.git && \
 	( cd sai && \
@@ -25,7 +36,7 @@ RUN mkdir artifacts && mkdir makertools && cd makertools && \
 	git clone https://github.com/dapphub/dapp && \
 	(cd dapp && git checkout a426596705be4dfcdd60e7965163453574459dcf) && \
 	git clone https://github.com/dapphub/ethsign && \
-	(cd ethsign && git checkout d7591c9cac762f15c7087c2d066176bb75ba8095) && \
+	(cd ethsign && git checkout 1b87fa0321c12e9be25e5e81b2d94bc1da415b88) && \
 	git clone https://github.com/paritytech/ethabi.git  && \
 	(cd ethabi && git checkout 81e393742ad03a6f993f2b06d3603d827e1bae00) && \
 	git clone https://github.com/keenerd/jshon.git && \
@@ -39,10 +50,8 @@ RUN (export GOPATH=/var/gopath && export GOBIN=/var/gopath/bin; mkdir -p $GOBIN;
 
 RUN (cd /build/makertools/ethabi/ && cargo build && cp target/debug/ethabi /build/artifacts/bin )
 
-ENV PATH="/build/artifacts/bin:${PATH}" \
-	ETH_RPC_URL=http://ethereum-node:8545 \
-	ETH_KEYSTORE=/tmp/keystore/ \
-	ETH_FROM=0x913dA4198E6bE1D5f5E4a40D0667f70C0B5430Eb
 
 WORKDIR /build/sai
-RUN dapp build
+# RUN dapp build
+
+RUN (cd / ; ./start.sh) & sleep 15 && bash /tmp/setup-maker && kill %1
