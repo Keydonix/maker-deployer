@@ -22,7 +22,7 @@ RUN apt-get -y install software-properties-common git bc nodejs cargo build-esse
 	add-apt-repository ppa:ethereum/ethereum && \
 	add-apt-repository ppa:gophers/archive && \
 	apt-get update && \
-	apt-get install -y solc libjansson-dev golang-1.8
+	apt-get install -y solc golang-1.8
 
 RUN git clone https://github.com/makerdao/sai.git && \
 	( cd sai && \
@@ -30,7 +30,7 @@ RUN git clone https://github.com/makerdao/sai.git && \
 	git submodule update --init --recursive )
 
 # steps to install Nix and DappHub tools
-RUN mkdir artifacts && mkdir makertools && cd makertools && \
+RUN mkdir artifacts && mkdir tools && cd tools && \
 	git clone https://github.com/dapphub/seth && \
 	(cd seth && git checkout de7048815c4953da391b93179af9c2c162e59b23) && \
 	git clone https://github.com/dapphub/dapp && \
@@ -44,14 +44,24 @@ RUN mkdir artifacts && mkdir makertools && cd makertools && \
 	make install -C seth prefix=/build/artifacts && \
 	make install -C dapp prefix=/build/artifacts && \
 	make -C jshon LDFLAGS="-static" && \
-	make install -C jshon TARGET_PATH=/build/artifacts/bin
-
-RUN (export GOPATH=/var/gopath && export GOBIN=/var/gopath/bin; mkdir -p $GOBIN; cd /build/makertools/ethsign/ && /usr/lib/go-1.8/bin/go get && /usr/lib/go-1.8/bin/go build && cp ethsign /build/artifacts/bin/ )
-
-RUN (cd /build/makertools/ethabi/ && cargo build && cp target/debug/ethabi /build/artifacts/bin )
+	make install -C jshon TARGET_PATH=/build/artifacts/bin && \
+	( \
+		export GOPATH=/var/gopath && \
+		export GOBIN=/var/gopath/bin && \
+		mkdir -p $GOBIN && \
+		cd ethsign/ && \
+		/usr/lib/go-1.8/bin/go get && \
+		/usr/lib/go-1.8/bin/go build && \
+		cp ethsign /build/artifacts/bin/ \
+	) && \
+	( \
+		cd ethabi/ && \
+		cargo build && \
+		cp target/debug/ethabi /build/artifacts/bin \
+	)
 
 
 WORKDIR /build/sai
 # RUN dapp build
 
-RUN (cd / ; ./start.sh) & sleep 15 && bash /tmp/setup-maker && kill %1
+RUN (cd / ; ./start.sh) & bash /tmp/setup-maker

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -ex
+
+export SOLC_FLAGS=${SOLC_FLAGS:-"--optimize"}
+export ETH_GAS=${ETH_GAS:-"3500000"}
+export ETH_FROM=${ETH_FROM:-$(seth rpc eth_coinbase)}
+
+dapp build
+
+export SETH_ASYNC=no
+
+GEM_FAB=$(dapp create GemFab)
+VOX_FAB=$(dapp create VoxFab)
+TUB_FAB=$(dapp create TubFab)
+TAP_FAB=$(dapp create TapFab)
+TOP_FAB=$(dapp create TopFab)
+MOM_FAB=$(dapp create MomFab)
+DAD_FAB=$(dapp create DadFab)
+
+export SETH_ASYNC=no
+
+
+cat > load-fab.sh << EOF
+#!/bin/bash
+
+# fab deployment on $(seth chain) from $(git rev-parse HEAD)
+# $(date)
+
+export GEM_FAB=$GEM_FAB
+export VOX_FAB=$VOX_FAB
+export TAP_FAB=$TAP_FAB
+export TUB_FAB=$TUB_FAB
+export TOP_FAB=$TOP_FAB
+export MOM_FAB=$MOM_FAB
+export DAD_FAB=$DAD_FAB
+EOF
+
+cat load-fab.sh
