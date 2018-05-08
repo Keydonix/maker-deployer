@@ -1,4 +1,4 @@
-FROM keydonix/parity-instantseal
+FROM keydonix/parity-instantseal AS builder
 
 ENV PATH="/build/artifacts/bin:${PATH}" \
 	ETH_RPC_URL=http://localhost:8545 \
@@ -18,7 +18,7 @@ RUN bash /tmp/setup_8.x
 
 WORKDIR /build
 
-RUN apt-get -y install software-properties-common git bc nodejs cargo build-essential libjansson-dev && \
+RUN apt-get -y install software-properties-common git bc nodejs cargo build-essential libjansson-dev psmisc && \
 	add-apt-repository ppa:ethereum/ethereum && \
 	add-apt-repository ppa:gophers/archive && \
 	apt-get update && \
@@ -60,8 +60,11 @@ RUN mkdir artifacts && mkdir tools && cd tools && \
 		cp target/debug/ethabi /build/artifacts/bin \
 	)
 
+WORKDIR /
+RUN ./start.sh & \
+	(cd /build/sai ; bash /tmp/setup-maker) && \
+	sleep 5 && killall parity && sleep 5
 
-WORKDIR /build/sai
-# RUN dapp build
-
-RUN (cd / ; ./start.sh) & bash /tmp/setup-maker
+FROM keydonix/parity-instantseal
+COPY --from=builder /parity/chains /parity/chains
+COPY --from=builder /build/sai/load-fab.sh /root/load-fab.sh
