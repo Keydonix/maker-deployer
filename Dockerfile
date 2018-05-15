@@ -24,3 +24,5 @@ ENV PATH="/build/artifacts/bin:${PATH}"
 WORKDIR /build/sai
 
 RUN dapp build
+
+WORKDIR /
