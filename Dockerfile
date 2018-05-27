@@ -1,4 +1,4 @@
-FROM keydonix/parity-instantseal-node8
+FROM keydonix/parity-instantseal
 # TODO: use digest
 
 WORKDIR /build
@@ -17,7 +17,7 @@ RUN git clone https://github.com/makerdao/sai.git && \
 RUN mkdir artifacts && mkdir tools && cd tools && \
 	git clone https://github.com/dapphub/dapp && \
 	(cd dapp && git checkout a426596705be4dfcdd60e7965163453574459dcf) && \
-        make install -C dapp prefix=/build/artifacts
+	make install -C dapp prefix=/build/artifacts
 
 ENV PATH="/build/artifacts/bin:${PATH}"
 
