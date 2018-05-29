@@ -12,6 +12,4 @@ COPY . /build/maker-docker-poa
 WORKDIR /build/maker-docker-poa
 
 RUN npm install
-RUN npm run build:source
-RUN npm run build:contracts
-RUN npm run build:interfaces
+RUN npm run clean-start
