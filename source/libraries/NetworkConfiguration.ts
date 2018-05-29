@@ -41,7 +41,7 @@ export class NetworkConfiguration {
     public readonly gasPrice: BN;
     public readonly isProduction: boolean;
 
-    public constructor(networkName: string, http: string, ws: string | undefined, gasPrice: BN, privateKey: string, isProduction: boolean) {
+    public constructor(networkName: string, http: string, ws: string | undefined, gasPrice: BN, privateKey: string | undefined, isProduction: boolean) {
         this.networkName = networkName;
         this.http = http;
         this.ws = ws;
@@ -50,11 +50,11 @@ export class NetworkConfiguration {
         this.isProduction = isProduction;
     }
 
-    public static create(networkName: string="environment"): NetworkConfiguration {
+    public static create(networkName: string="environment", validatePrivateKey: boolean=true): NetworkConfiguration {
         const network = networks[networkName];
 
         if (network === undefined || network === null) throw new Error(`Network configuration ${networkName} not found`);
-        if (network.privateKey === undefined || network.privateKey === null) throw new Error(`Network configuration for ${networkName} has no private key available. Check that this key is in the environment ${networkName == "environment" ? "ETHEREUM" : networkName.toUpperCase()}_PRIVATE_KEY`);
+        if (validatePrivateKey && (network.privateKey === undefined || network.privateKey === null)) throw new Error(`Network configuration for ${networkName} has no private key available. Check that this key is in the environment ${networkName == "environment" ? "ETHEREUM" : networkName.toUpperCase()}_PRIVATE_KEY`);
 
         return new NetworkConfiguration(networkName, network.http, network.ws, network.gasPrice, network.privateKey, network.isProduction);
     }
