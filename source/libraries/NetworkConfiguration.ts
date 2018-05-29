@@ -13,35 +13,10 @@ type Networks = {
 }
 
 const networks: Networks = {
-    ropsten: {
-        isProduction: false,
-        http: "http://ropsten.ethereum.nodes.augur.net",
-        privateKey: process.env.ROPSTEN_PRIVATE_KEY,
-        gasPrice: new BN(20*1000000000)
-    },
     kovan: {
         isProduction: false,
-        http: "http://kovan.ethereum.nodes.augur.net",
-        privateKey: process.env.KOVAN_PRIVATE_KEY,
-        gasPrice: new BN(1)
-    },
-    rinkeby: {
-        isProduction: false,
-        http: "https://rinkeby.augur.net/ethereum-http",
-        ws: "wss://rinkeby.augur.net/ethereum-ws",
-        privateKey: process.env.RINKEBY_PRIVATE_KEY,
-        gasPrice: new BN(31*1000000000)
-    },
-    clique: {
-        isProduction: false,
-        http: "http://clique.ethereum.nodes.augur.net",
-        privateKey: process.env.CLIQUE_PRIVATE_KEY || "fae42052f82bed612a724fec3632f325f377120592c75bb78adfcceae6470c5a",
-        gasPrice: new BN(1)
-    },
-    aura: {
-        isProduction: false,
-        http: "http://aura.ethereum.nodes.augur.net",
-        privateKey: process.env.AURA_PRIVATE_KEY || "fae42052f82bed612a724fec3632f325f377120592c75bb78adfcceae6470c5a",
+        http: "http://kovan.ethereum.keydonix.com",
+        privateKey: process.env.KOVAN_PRIVATE_KEY || process.env.ETHEREUM_PRIVATE_KEY,
         gasPrice: new BN(1)
     },
     environment: {
@@ -66,7 +41,7 @@ export class NetworkConfiguration {
     public readonly gasPrice: BN;
     public readonly isProduction: boolean;
 
-    public constructor(networkName: string, http: string, ws: string | undefined, gasPrice: BN, privateKey: string | undefined, isProduction: boolean) {
+    public constructor(networkName: string, http: string, ws: string | undefined, gasPrice: BN, privateKey: string, isProduction: boolean) {
         this.networkName = networkName;
         this.http = http;
         this.ws = ws;
@@ -75,11 +50,11 @@ export class NetworkConfiguration {
         this.isProduction = isProduction;
     }
 
-    public static create(networkName: string="environment", validatePrivateKey: boolean=true): NetworkConfiguration {
+    public static create(networkName: string="environment"): NetworkConfiguration {
         const network = networks[networkName];
 
         if (network === undefined || network === null) throw new Error(`Network configuration ${networkName} not found`);
-        if (validatePrivateKey && (network.privateKey === undefined || network.privateKey === null)) throw new Error(`Network configuration for ${networkName} has no private key available. Check that this key is in the environment ${networkName == "environment" ? "ETHEREUM" : networkName.toUpperCase()}_PRIVATE_KEY`);
+        if (network.privateKey === undefined || network.privateKey === null) throw new Error(`Network configuration for ${networkName} has no private key available. Check that this key is in the environment ${networkName == "environment" ? "ETHEREUM" : networkName.toUpperCase()}_PRIVATE_KEY`);
 
         return new NetworkConfiguration(networkName, network.http, network.ws, network.gasPrice, network.privateKey, network.isProduction);
     }
