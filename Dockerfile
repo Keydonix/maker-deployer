@@ -12,4 +12,7 @@ COPY . /build/maker-docker-poa
 WORKDIR /build/maker-docker-poa
 
 RUN npm install
-RUN npm run clean-start
+RUN npx tsc && \
+        ./fetch-sai-contracts.sh \
+        node output/deployment/compileContracts.js && \
+        node output/tools/generateContractInterfaces.js
