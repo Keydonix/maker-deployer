@@ -13,7 +13,7 @@
     "src": "source"
   },
   "scripts": {
-    "build:source": "npx tsc",
+    "build:source": "tsc",
     "build:contracts": "npm run fetch:sai && node output/deployment/compileContracts.js",
     "build:interfaces": "npm run fetch:sai && node output/tools/generateContractInterfaces.js",
     "build": "npm run build:source && npm run build:contracts && npm run build:interfaces",
