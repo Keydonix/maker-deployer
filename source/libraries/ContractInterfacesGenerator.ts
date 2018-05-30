@@ -24,14 +24,10 @@ export class ContractInterfaceGenerator {
     private contractInterfacesTemplate(contracts: CompilerOutputContracts) {
         const contractInterfaces: Array<string> = [];
 
-        // We add Controlled first to let other contracts inherit from it
-        contractInterfaces.push(this.contractInterfaceTemplate("Controlled", contracts["Controlled.sol"]["Controlled"].abi));
-
         for (let globalName in contracts) {
             for (let contractName in contracts[globalName]) {
                 const contractAbi: Abi = contracts[globalName][contractName].abi;
                 if (contractAbi.length == 0) continue;
-                if (contractName == "Controlled") continue;
                 contractInterfaces.push(this.contractInterfaceTemplate(contractName, contractAbi));
             }
         }
@@ -45,7 +41,7 @@ export class ContractInterfaceGenerator {
     import { Connector } from './Connector';
 
     /**
-     * By convention, pure/view methods have a \`_\` suffix on them indicating to the caller that the function will be executed locally and return the function's result.  payable/nonpayable functions have both a localy version and a remote version (distinguished by the trailing \`_\`).  If the remote method is called, you will only get back a transaction hash which can be used to lookup the transaction receipt for success/failure (due to EVM limitations you will not get the function results back).
+     * By convention, pure/view methods have a \`_\` suffix on them indicating to the caller that the function will be executed locally and return the function's result.  payable/nonpayable functions have both a locally version and a remote version (distinguished by the trailing \`_\`).  If the remote method is called, you will only get back a transaction hash which can be used to lookup the transaction receipt for success/failure (due to EVM limitations you will not get the function results back).
      */
 
     export class Contract {
@@ -87,9 +83,6 @@ export class ContractInterfaceGenerator {
     }
 
     ${contractInterfaces.join("\n")}
-    export function ContractFactory(connector: Connector, accountManager: AccountManager, address: string, defaultGasPrice: BN): Controlled {
-        return new Controlled(connector, accountManager, address, defaultGasPrice);
-    }
     `;
     }
 
@@ -112,10 +105,8 @@ export class ContractInterfaceGenerator {
             seen.add(abiFunction.name);
         }
 
-        const extendsControlled: boolean = seen.has("getController") && contractName != "Controlled";
-
         return `
-    export class ${contractName} extends ${extendsControlled ? "Controlled" : "Contract"} {
+    export class ${contractName} extends Contract {
         public constructor(connector: Connector, accountManager: AccountManager, address: string, defaultGasPrice: BN) {
             super(connector, accountManager, address, defaultGasPrice);
         }
@@ -153,7 +144,7 @@ ${contractMethods.join("\n\n")}
     }
 
     private getTsTypeFromPrimitive(abiType: Primitive) {
-        switch(abiType) {
+        switch (abiType) {
             case 'uint8':
             case 'uint64':
             case 'uint256':
@@ -162,6 +153,7 @@ ${contractMethods.join("\n\n")}
             }
             case 'string':
             case 'address':
+            case 'bytes4':
             case 'bytes20':
             case 'bytes32':
             case 'bytes': {

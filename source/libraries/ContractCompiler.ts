@@ -50,7 +50,11 @@ export class ContractCompiler {
             }
 
             if (errors.length > 0) {
+              if (errors.match(/errors?:/i)) {
                 throw new Error("The following errors/warnings were returned by solc:\n\n" + errors);
+              } else {
+                console.warn("The following warnings were returned by solc\n\n" + errors);
+              }
             }
         }
 
@@ -92,7 +96,8 @@ export class ContractCompiler {
             sources: {}
         };
         for (var file in files) {
-            const filePath = filePaths[file].replace(this.configuration.contractSourceRoot, "").replace(/\\/g, "/");
+            const filePath = filePaths[file].replace(this.configuration.contractSourceRoot, "").replace(/\\/g, "/").replace("/src", "");
+            if (filePath.includes(".t.sol") || filePath.includes("test.sol")) continue;
             inputJson.sources[filePath] = { content : files[file] };
         }
 
@@ -102,19 +107,16 @@ export class ContractCompiler {
     private filterCompilerOutput(compilerOutput: CompilerOutput): CompilerOutput {
         const result: CompilerOutput = { contracts: {} };
         for (let relativeFilePath in compilerOutput.contracts) {
-            for (let contractName in compilerOutput.contracts[relativeFilePath]) {
-                // don't include libraries
-                if (relativeFilePath.startsWith('libraries/') && contractName !== 'Delegator' && contractName !== 'Map') continue;
-                // don't include embedded libraries
-                if (!relativeFilePath.endsWith(`${contractName}.sol`)) continue;
-                const abi = compilerOutput.contracts[relativeFilePath][contractName].abi;
+          let contractsInFile = compilerOutput.contracts[relativeFilePath];
+          for (let contractName in contractsInFile) {
+                if (!this.configuration.activeContracts.includes(relativeFilePath)) continue;
+                const abi = contractsInFile[contractName].abi;
                 if (abi === undefined) continue;
-                const bytecode = compilerOutput.contracts[relativeFilePath][contractName].evm.bytecode.object;
+                const bytecode = contractsInFile[contractName].evm.bytecode.object;
                 if (bytecode === undefined) continue;
                 // don't include interfaces or Abstract contracts
                 if (/^(?:I|Base)[A-Z].*/.test(contractName)) continue;
                 if (bytecode.length === 0) throw new Error("Contract: " + contractName + " has no bytecode, but this is not expected. It probably doesn't implement all its abstract methods");
-
                 result.contracts[relativeFilePath] = {
                     [contractName]: {
                         abi: abi,

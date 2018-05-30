@@ -13,6 +13,6 @@ WORKDIR /build/maker-docker-poa
 
 RUN npm install
 RUN npx tsc && \
-        ./fetch-sai-contracts.sh \
+        ./fetch-sai-contracts.sh && \
         node output/deployment/compileContracts.js && \
         node output/tools/generateContractInterfaces.js
