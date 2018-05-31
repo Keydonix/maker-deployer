@@ -2,7 +2,7 @@ import { exists, readFile, writeFile } from "async-file";
 import { encodeParams } from 'ethjs-abi';
 import { stringTo32ByteHex, resolveAll } from "./HelperFunctions";
 import { CompilerOutput } from "solc";
-import { Abi, AbiFunction } from 'ethereum';
+import { Abi, AbiEvent, AbiFunction } from 'ethereum';
 import { DeployerConfiguration } from './DeployerConfiguration';
 import { Connector } from './Connector';
 import { NetworkConfiguration } from './NetworkConfiguration';
@@ -160,8 +160,7 @@ Deploying to: ${networkConfiguration.networkName}
         if (constructorArgs.length === 0) {
             return bytecode;
         }
-        // TODO: submit a TypeScript bug that it can't deduce the type is AbiFunction|undefined here
-        const constructorSignature = <AbiFunction | undefined>abi.find(signature => signature.type === 'constructor');
+        const constructorSignature = abi.find((signature: AbiFunction | AbiEvent): signature is AbiFunction => signature.type === 'constructor');
         if (typeof constructorSignature === 'undefined') throw new Error(`ABI did not contain a constructor.`);
         const constructorInputTypes = constructorSignature.inputs.map(x => x.type);
         const encodedConstructorParameters = Buffer.from(encodeParams(constructorInputTypes, constructorArgs).substring(2), 'hex');
