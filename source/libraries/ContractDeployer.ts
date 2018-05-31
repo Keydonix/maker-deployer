@@ -1,4 +1,3 @@
-import BN = require('bn.js');
 import { exists, readFile, writeFile } from "async-file";
 import { encodeParams } from 'ethjs-abi';
 import { stringTo32ByteHex, resolveAll } from "./HelperFunctions";
@@ -54,10 +53,6 @@ Deploying to: ${networkConfiguration.networkName}
         this.connector = connector;
         this.accountManager = accountManager;
         this.contracts = new Contracts(compilerOutput);
-    }
-
-    public async getBlockNumber(): Promise<number> {
-        return this.connector.ethjsQuery.getBlockByNumber('latest', false).then((block) => block.number.toNumber());
     }
 
     public async deploy(): Promise<void> {
@@ -175,7 +170,6 @@ Deploying to: ${networkConfiguration.networkName}
 
     private async construct(contract: Contract, constructorArgs: Array<string>, failureDetails: string): Promise<string> {
         const data = `0x${ContractDeployer.getEncodedConstructData(contract.abi, contract.bytecode, constructorArgs).toString('hex')}`;
-        // TODO: remove `gas` property once https://github.com/ethereumjs/testrpc/issues/411 is fixed
         const gasEstimate = await this.connector.ethjsQuery.estimateGas({
             from: this.accountManager.defaultAddress,
             data: data
@@ -208,24 +202,4 @@ Deploying to: ${networkConfiguration.networkName}
         const addressMappingJson = await this.generateAddressMapping(contractAddressMapping);
         await writeFile(this.configuration.contractAddressesOutputPath, addressMappingJson, 'utf8')
     }
-
-//
-//     private async generateUploadBlockNumberMapping(blockNumber: number): Promise<string> {
-//         type UploadBlockNumberMapping = { [networkId: string]: number };
-//
-//         const networkId = await this.connector.ethjsQuery.net_version();
-//         let blockNumberMapping: UploadBlockNumberMapping  = {};
-//         if (await exists(this.configuration.uploadBlockNumbersOutputPath)) {
-//             let existingBlockNumberData: string = await readFile(this.configuration.uploadBlockNumbersOutputPath, 'utf8');
-//             blockNumberMapping = JSON.parse(existingBlockNumberData);
-//         }
-//         blockNumberMapping[networkId] = blockNumber;
-//         return JSON.stringify(blockNumberMapping, null, '  ');
-//     }
-//
-//     private async generateUploadBlockNumberFile(blockNumber: number): Promise<void> {
-//         const blockNumberMapping = await this.generateUploadBlockNumberMapping(blockNumber);
-//         await writeFile(this.configuration.uploadBlockNumbersOutputPath, blockNumberMapping, 'utf8')
-//     }
-
 }
