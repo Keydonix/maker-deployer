@@ -23,7 +23,7 @@ export class ContractCompiler {
         try {
             const stats = await fs.stat(this.configuration.contractOutputPath);
             const lastCompiledTimestamp = stats.mtime;
-            const ignoreCachedFile = function(file: string, stats: fs.Stats): boolean {
+            const ignoreCachedFile = function (file: string, stats: fs.Stats): boolean {
                 return (stats.isFile() && path.extname(file) !== ".sol") || (stats.isFile() && path.extname(file) === ".sol" && stats.mtime < lastCompiledTimestamp);
             }
             const uncachedFiles = await recursiveReadDir(this.configuration.contractSourceRoot, [ignoreCachedFile]);
@@ -50,11 +50,11 @@ export class ContractCompiler {
             }
 
             if (errors.length > 0) {
-              if (errors.match(/errors?:/i)) {
-                throw new Error("The following errors/warnings were returned by solc:\n\n" + errors);
-              } else {
-                console.warn("The following warnings were returned by solc\n\n" + errors);
-              }
+                if (errors.match(/errors?:/i)) {
+                    throw new Error("The following errors/warnings were returned by solc:\n\n" + errors);
+                } else {
+                    console.warn("The following warnings were returned by solc\n\n" + errors);
+                }
             }
         }
 
@@ -73,7 +73,7 @@ export class ContractCompiler {
     }
 
     public async generateCompilerInput(): Promise<CompilerInput> {
-        const ignoreFile = function(file: string, stats: fs.Stats): boolean {
+        const ignoreFile = function (file: string, stats: fs.Stats): boolean {
             return file.indexOf("legacy_reputation") > -1 || (stats.isFile() && path.extname(file) !== ".sol");
         }
         const filePaths = await recursiveReadDir(this.configuration.contractSourceRoot, [ignoreFile]);
@@ -89,7 +89,7 @@ export class ContractCompiler {
                 },
                 outputSelection: {
                     "*": {
-                        "*": [ "abi", "evm.bytecode.object" ]
+                        "*": ["abi", "evm.bytecode.object"]
                     }
                 }
             },
@@ -98,17 +98,17 @@ export class ContractCompiler {
         for (var file in files) {
             const filePath = filePaths[file].replace(this.configuration.contractSourceRoot, "").replace(/\\/g, "/").replace("/src", "");
             if (filePath.includes(".t.sol") || filePath.includes("test.sol")) continue;
-            inputJson.sources[filePath] = { content : files[file] };
+            inputJson.sources[filePath] = {content: files[file]};
         }
 
         return inputJson;
     }
 
     private filterCompilerOutput(compilerOutput: CompilerOutput): CompilerOutput {
-        const result: CompilerOutput = { contracts: {} };
+        const result: CompilerOutput = {contracts: {}};
         for (let relativeFilePath in compilerOutput.contracts) {
-          let contractsInFile = compilerOutput.contracts[relativeFilePath];
-          for (let contractName in contractsInFile) {
+            let contractsInFile = compilerOutput.contracts[relativeFilePath];
+            for (let contractName in contractsInFile) {
                 if (!this.configuration.activeContracts.includes(relativeFilePath)) continue;
                 const abi = contractsInFile[contractName].abi;
                 if (abi === undefined) continue;
@@ -117,11 +117,10 @@ export class ContractCompiler {
                 // don't include interfaces or Abstract contracts
                 if (/^(?:I|Base)[A-Z].*/.test(contractName)) continue;
                 if (bytecode.length === 0) throw new Error("Contract: " + contractName + " has no bytecode, but this is not expected. It probably doesn't implement all its abstract methods");
-                result.contracts[relativeFilePath] = {
-                    [contractName]: {
-                        abi: abi,
-                        evm: { bytecode: { object: bytecode } }
-                    }
+                if (result.contracts[relativeFilePath] === undefined) result.contracts[relativeFilePath] = {}
+                result.contracts[relativeFilePath][contractName] = {
+                    abi: abi,
+                    evm: {bytecode: {object: bytecode}}
                 }
             }
         }

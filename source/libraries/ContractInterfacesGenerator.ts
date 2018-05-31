@@ -178,11 +178,11 @@ ${contractMethods.join("\n\n")}
     }
 
     private getArgNamesString(abiFunction: AbiFunction) {
-        return abiFunction.inputs.map((v, i) => v.name.substr(1) || `arg${i}`).join(", ");
+        return abiFunction.inputs.map((v, i) => v.name || `arg${i}`).join(", ");
     }
 
     private getParamsString(abiFunction: AbiFunction) {
         if (abiFunction.inputs.length == 0) return "";
-        return abiFunction.inputs.map((v, i) => (v.name.substr(1) || `arg${i}`) + ": " + this.getTsTypeFromPrimitive(v.type)).join(", ") + ",";
+        return abiFunction.inputs.map((v, i) => (v.name || `arg${i}`) + ": " + this.getTsTypeFromPrimitive(v.type)).join(", ") + ",";
     }
 }
