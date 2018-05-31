@@ -1,21 +1,16 @@
 import BN = require('bn.js');
-import { hash } from 'crypto-promise';
 import { exists, readFile, writeFile } from "async-file";
-import { exec } from 'child_process';
 import { encodeParams } from 'ethjs-abi';
-import { TransactionReceipt } from 'ethjs-shared';
 import { stringTo32ByteHex, resolveAll } from "./HelperFunctions";
 import { CompilerOutput } from "solc";
 import { Abi, AbiFunction } from 'ethereum';
 import { DeployerConfiguration } from './DeployerConfiguration';
 import { Connector } from './Connector';
-// import { Augur, ContractFactory, Controller, Controlled, Universe, ReputationToken, LegacyReputationToken, TimeControlled } from './ContractInterfaces';
 import { NetworkConfiguration } from './NetworkConfiguration';
 import { AccountManager } from './AccountManager';
 import { Contracts, Contract } from './Contracts';
 import {
     GemFab,
-    SaiMom,
     TubFab,
     VoxFab,
     DaiFab,
@@ -25,10 +20,12 @@ import {
     TapFab,
     WETH9,
     DSToken,
-    DSRoles, DSValue
+    DSRoles,
+    DSValue
 } from "./ContractInterfaces";
 
 type ContractAddressMapping = { [name: string]: string };
+type NetworkAddressMapping = { [networkId: string]: ContractAddressMapping };
 
 export class ContractDeployer {
     private readonly accountManager: AccountManager;
@@ -197,8 +194,6 @@ Deploying to: ${networkConfiguration.networkName}
     }
 
     private async generateAddressMapping(contractAddressMapping: ContractAddressMapping): Promise<string> {
-        type NetworkAddressMapping = { [networkId: string]: ContractAddressMapping };
-
         const networkId = await this.connector.ethjsQuery.net_version();
         let addressMapping: NetworkAddressMapping = {};
         if (await exists(this.configuration.contractAddressesOutputPath)) {
