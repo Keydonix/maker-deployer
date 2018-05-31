@@ -18,7 +18,7 @@
     "build:interfaces": "npm run fetch:sai && node output/tools/generateContractInterfaces.js",
     "build": "npm run build:source && npm run build:contracts && npm run build:interfaces",
     "deploy": "node output/deployment/deployContracts.js",
-    "compileAndDeploy": "node output/deployment/compileAndDeploy.js",
+    "compileAndDeploy": "npm run fetch:sai && node output/deployment/compileAndDeploy.js",
     "clean": "rimraf output",
     "clean-start": "npm run clean && npm run build",
     "docker:build": "docker build . -t keydonix/maker-docker-poa",
