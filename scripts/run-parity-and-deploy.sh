@@ -19,4 +19,4 @@ wait %2
 
 node output/deployment/deployContracts.js
 
-$(kill -TERM $(pidof parity))
+kill -TERM $(pidof parity)
