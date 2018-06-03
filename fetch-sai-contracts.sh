@@ -29,5 +29,4 @@ cloneCheckoutCommit dapphub/ds-math 87bef2f67b043819b7195ce6df3058bd3c321107
 cloneCheckoutCommit dapphub/ds-exec f6b61769c700326b7c3e7bfad6e9f2c16a9148e1
 cloneCheckoutCommit dapphub/ds-stop 842e35008eddc28a914e56be94afb7de3aec9d1d
 cloneCheckoutCommit dapphub/erc20 c4f56358d57e55e6d1c6626798cd325c9cc57d92
-
-
+cloneCheckoutCommit makerdao/maker-otc a8b34cd63ab298f0e0c12b9c17615b895a3e10c1
