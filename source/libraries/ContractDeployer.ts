@@ -28,8 +28,7 @@ import BN = require("bn.js");
 
 type ContractAddressMapping = { [name: string]: string };
 
-type VoxTubAddresses = {
-};
+const ETHER = new BN(10).pow(new BN(18));
 
 export class ContractDeployer {
     private readonly accountManager: AccountManager;

@@ -1,5 +1,3 @@
-import BN = require("bn.js");
-
 export function stringTo32ByteHex(stringToEncode: string): string {
     return `0x${Buffer.from(stringToEncode, 'utf8').toString('hex').padEnd(64, '0')}`;
 }
@@ -19,5 +17,3 @@ export async function resolveAll(promises: Iterable<Promise<any>>) {
     }
     if (firstError !== null) throw firstError;
 }
-
-export const ETHER = new BN(10).pow(new BN(18));
