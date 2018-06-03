@@ -1,4 +1,5 @@
-FROM keydonix/parity-instantseal-node8
+FROM keydonix/parity-instantseal-node8:safe
+# TODO: stop using :safe once we get real deploy of fixed instantseal
 # TODO: use digest
 
 # TODO: vendor
