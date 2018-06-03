@@ -1,6 +1,6 @@
 import { readFile, writeFile } from "async-file";
 import { encodeParams } from 'ethjs-abi';
-import { stringTo32ByteHex, ETHER } from "./HelperFunctions";
+import { stringTo32ByteHex } from "./HelperFunctions";
 import { CompilerOutput } from "solc";
 import { Abi, AbiEvent, AbiFunction } from 'ethereum';
 import { DeployerConfiguration } from './DeployerConfiguration';
@@ -169,7 +169,7 @@ Deploying to: ${networkConfiguration.networkName}
 
         // test -z $SAI_PEP && PEPtx=$(dapp create DSValue)
         const saiPepContract = new DSValue(this.connector, this.accountManager, await this.simpleDeploy("DSValue"), this.connector.gasPrice)
-        saiPipContract.poke( this.defaultMakerPriceInUsd )
+        saiPepContract.poke( this.defaultMakerPriceInUsd )
 
         return {saiPipContract, saiPepContract};
     }
@@ -177,7 +177,6 @@ Deploying to: ${networkConfiguration.networkName}
     private async deployTokens() {
         // test -z $SAI_GEM && GEMtx=$(dapp create DSToken $(seth --to-bytes32 $(seth --from-ascii 'ETH')))
         const saiGemContract = new WETH9(this.connector, this.accountManager, await this.simpleDeploy("WETH9"), this.connector.gasPrice);
-        // await wethContract.deposit({attachedEth: new BN(1000)})
 
         // test -z $SAI_GOV && GOVtx=$(dapp create DSToken $(seth --to-bytes32 $(seth --from-ascii 'GOV')))
         const saiGovContract = new DSToken(this.connector, this.accountManager, await this.simpleDeploy("DSToken", [stringTo32ByteHex("GOV")]), this.connector.gasPrice)
