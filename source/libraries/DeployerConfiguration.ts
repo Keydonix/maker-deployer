@@ -4,14 +4,16 @@ const ARTIFACT_OUTPUT_ROOT  = (typeof process.env.ARTIFACT_OUTPUT_ROOT === 'unde
 
 export class DeployerConfiguration {
     public readonly contractInputPath: string;
-    public readonly contractAddressesOutputPath: string;
+    public readonly contractAddressesOutputPathJson: string;
+    public readonly contractAddressesOutputPathEnvFile: string;
     public readonly uploadBlockNumbersOutputPath: string;
     public readonly isProduction: boolean;
 
     public constructor(contractInputRoot: string, artifactOutputRoot: string, isProduction: boolean=false) {
         this.isProduction = isProduction;
 
-        this.contractAddressesOutputPath = path.join(artifactOutputRoot, 'addresses.json');
+        this.contractAddressesOutputPathJson = path.join(artifactOutputRoot, 'addresses.json');
+        this.contractAddressesOutputPathEnvFile = path.join(artifactOutputRoot, 'addresses.env');
         this.uploadBlockNumbersOutputPath = path.join(artifactOutputRoot, 'upload-block-numbers.json');
         this.contractInputPath = path.join(contractInputRoot, 'contracts.json');
     }

@@ -17,4 +17,3 @@ export async function resolveAll(promises: Iterable<Promise<any>>) {
     }
     if (firstError !== null) throw firstError;
 }
-

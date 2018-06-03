@@ -1,6 +1,6 @@
-import { exists, readFile, writeFile } from "async-file";
+import { readFile, writeFile } from "async-file";
 import { encodeParams } from 'ethjs-abi';
-import { stringTo32ByteHex, resolveAll } from "./HelperFunctions";
+import { stringTo32ByteHex } from "./HelperFunctions";
 import { CompilerOutput } from "solc";
 import { Abi, AbiEvent, AbiFunction } from 'ethereum';
 import { DeployerConfiguration } from './DeployerConfiguration';
@@ -20,17 +20,25 @@ import {
     WETH9,
     DSToken,
     DSRoles,
-    DSValue
+    DSValue,
+    MatchingMarket,
+    GemPit
 } from "./ContractInterfaces";
+import BN = require("bn.js");
 
 type ContractAddressMapping = { [name: string]: string };
-type NetworkAddressMapping = { [networkId: string]: ContractAddressMapping };
+
+const ETHER = new BN(10).pow(new BN(18));
 
 export class ContractDeployer {
     private readonly accountManager: AccountManager;
     private readonly configuration: DeployerConfiguration;
     private readonly connector: Connector;
     private readonly contracts: Contracts;
+
+    private readonly defaultEthPriceInUsd   = "0x0000000000000000000000000000000000000000000000200000000000000000";
+    private readonly defaultMakerPriceInUsd = "0x00000000000000000000000000000000000000000000002a0000000000000000";
+
 
     public static deployToNetwork = async (networkConfiguration: NetworkConfiguration, deployerConfiguration: DeployerConfiguration) => {
         const connector = new Connector(networkConfiguration);
@@ -42,7 +50,8 @@ export class ContractDeployer {
         console.log(`\n\n-----------------
 Deploying to: ${networkConfiguration.networkName}
     compiled contracts: ${deployerConfiguration.contractInputPath}
-    contract address: ${deployerConfiguration.contractAddressesOutputPath}
+    contract address: ${deployerConfiguration.contractAddressesOutputPathJson}
+    contract address env: ${deployerConfiguration.contractAddressesOutputPathEnvFile}
     upload blocks #s: ${deployerConfiguration.uploadBlockNumbersOutputPath}
 `);
         await contractDeployer.deploy();
@@ -56,64 +65,71 @@ Deploying to: ${networkConfiguration.networkName}
     }
 
     public async deploy(): Promise<void> {
-        const gemFabContract = new GemFab(this.connector, this.accountManager, await this.simpleDeploy("GemFab"), this.connector.gasPrice);
-        const voxFabContract = new VoxFab(this.connector, this.accountManager, await this.simpleDeploy("VoxFab"), this.connector.gasPrice);
-        const tubFabContract = new TubFab(this.connector, this.accountManager, await this.simpleDeploy("TubFab"), this.connector.gasPrice);
-        const tapFabContract = new TapFab(this.connector, this.accountManager, await this.simpleDeploy("TapFab"), this.connector.gasPrice);
-        const topFabContract = new TopFab(this.connector, this.accountManager, await this.simpleDeploy("TopFab"), this.connector.gasPrice);
-        const momFabContract = new MomFab(this.connector, this.accountManager, await this.simpleDeploy("MomFab"), this.connector.gasPrice);
-        const dadFabContract = new DadFab(this.connector, this.accountManager, await this.simpleDeploy("DadFab"), this.connector.gasPrice);
+        const {saiGemContract, saiGovContract} = await this.deployTokens();
+        const {saiPipContract, saiPepContract} = await this.deployFeeds();
+        const {saiAdmContract, saiPitContract} = await this.deployAuthAndBurner();
 
-        // test -z $SAI_GEM && GEMtx=$(dapp create DSToken $(seth --to-bytes32 $(seth --from-ascii 'ETH')))
-        const saiGemContract = new WETH9(this.connector, this.accountManager, await this.simpleDeploy("WETH9"), this.connector.gasPrice );
-        // await wethContract.deposit({attachedEth: new BN(1000)})
+        const daiFabContract = await this.deployDaiFab();
 
-        // test -z $SAI_GOV && GOVtx=$(dapp create DSToken $(seth --to-bytes32 $(seth --from-ascii 'GOV')))
-        const saiGovContract = new DSToken(this.connector, this.accountManager, await this.simpleDeploy("DSToken", [stringTo32ByteHex("GOV")]), this.connector.gasPrice)
+        await this.deployConfigureDaiFab(daiFabContract,
+            saiAdmContract,
+            saiGemContract.address,
+            saiGovContract.address,
+            saiPipContract.address,
+            saiPepContract.address,
+            saiPitContract.address,
+    );
+        const odContract = await this.deployOasisdex(saiGemContract.address, await daiFabContract.sai_());
 
-        // test -z $SAI_PIP && PIPtx=$(dapp create DSValue)
-        const saiPipContract = new DSValue(this.connector, this.accountManager, await this.simpleDeploy("DSValue"), this.connector.gasPrice)
+        await saiGemContract.deposit({attachedEth: new BN(40).mul(ETHER)})
 
-        // test -z $SAI_PEP && PEPtx=$(dapp create DSValue)
-        const saiPepContract = new DSValue(this.connector, this.accountManager, await this.simpleDeploy("DSValue"), this.connector.gasPrice)
+        console.log({
+            gem: saiGemContract.address,
+            gov: saiGovContract.address,
+            pip: saiPipContract.address,
+            pep: saiPepContract.address,
+            pit: saiPitContract.address,
+            adm: saiGemContract.address,
 
-        // test -z $SAI_PIT && SAI_PIT="0x0000000000000000000000000000000000000123"
-        // I suppose burner is optional? Consider adding later
-        const saiPitAddress = "0x0000000000000000000000000000000000000123";
+            sai: await daiFabContract.sai_(),
+            sin: await daiFabContract.sin_(),
+            skr: await daiFabContract.skr_(),
+            dad: await daiFabContract.dad_(),
+            mom: await daiFabContract.mom_(),
+            vox: await daiFabContract.vox_(),
+            tub: await daiFabContract.tub_(),
+            tap: await daiFabContract.tap_(),
+            top: await daiFabContract.top_(),
 
-        // DAI_FAB=$(dapp create DaiFab $GEM_FAB $VOX_FAB $TUB_FAB $TAP_FAB $TOP_FAB $MOM_FAB $DAD_FAB)
-        const daiFabAddress = await this.simpleDeploy("DaiFab", [
-            gemFabContract.address,
-            voxFabContract.address,
-            tubFabContract.address,
-            tapFabContract.address,
-            topFabContract.address,
-            momFabContract.address,
-            dadFabContract.address,
-        ]);
-        const daiFabContract = new DaiFab(this.connector, this.accountManager, daiFabAddress, this.connector.gasPrice);
+            oasisDex: odContract.address,
+        });
+        const deployedContractAddresses = {
+            tub: await daiFabContract.tub_(),
+            oasisDex: odContract.address,
+        };
+        await this.generateAddressMappingFiles(deployedContractAddresses);
+    }
 
-        //
-        // if [ -z $SAI_ADM ]
-        // then
-        //     SAI_ADM=$(dapp create DSRoles)
-        //     seth send $SAI_ADM 'setRootUser(address,bool)' $ETH_FROM true
-        // fi
-        const saiAdmContract = new DSRoles(this.connector, this.accountManager, await this.simpleDeploy("DSRoles"), this.connector.gasPrice)
+    private async deployOasisdex(gemAddress: string, daiAddress: string) {
+        const odContract = new MatchingMarket(this.connector, this.accountManager, await this.simpleDeploy("MatchingMarket"), this.connector.gasPrice)
+        await odContract.addTokenPairWhitelist(gemAddress, daiAddress);
+        return odContract;
+    }
 
+    private async deployConfigureDaiFab(daiFabContract: DaiFab,
+                                        saiAdmContract: DSRoles,
+                                        gem: string,
+                                        gov: string,
+                                        pip: string,
+                                        pep: string,
+                                        pit: string) {
         // seth send $DAI_FAB 'makeTokens()
         console.log("DaiFab.makeTokens()");
         await daiFabContract.makeTokens();
 
         // seth send $DAI_FAB 'makeVoxTub(address,address,address,address,address)' $SAI_GEM $SAI_GOV $SAI_PIP $SAI_PEP $SAI_PIT
         console.log("DaiFab.makeVoxTub()");
-        await daiFabContract.makeVoxTub(
-            saiGemContract.address,
-            saiGovContract.address,
-            saiPipContract.address,
-            saiPepContract.address,
-            saiPitAddress,
-        );
+        await daiFabContract.makeVoxTub(gem, gov, pip, pep, pit);
 
         // seth send $DAI_FAB 'makeTapTop()'
         console.log("DaiFab.makeTapTop()");
@@ -130,26 +146,63 @@ Deploying to: ${networkConfiguration.networkName}
         // seth send $DAI_FAB 'configAuth(address)' $SAI_ADM
         console.log("DaiFab.configAuth()");
         await daiFabContract.configAuth(saiAdmContract.address);
+    }
 
-        const deployedContractAddresses = {
-            gem: saiGemContract.address,
-            gov: saiGovContract.address,
-            pip: saiPipContract.address,
-            pep: saiPepContract.address,
-            pit: saiPitAddress,
-            adm: saiGemContract.address,
+    private async deployAuthAndBurner() {
+        // if [ -z $SAI_ADM ]
+        // then
+        //     SAI_ADM=$(dapp create DSRoles)
+        //     seth send $SAI_ADM 'setRootUser(address,bool)' $ETH_FROM true
+        // fi
+        const saiAdmContract = new DSRoles(this.connector, this.accountManager, await this.simpleDeploy("DSRoles"), this.connector.gasPrice)
+        await saiAdmContract.setRootUser(this.accountManager.defaultAddress, true);
 
-            sai: await daiFabContract.sai_(),
-            sin: await daiFabContract.sin_(),
-            skr: await daiFabContract.skr_(),
-            dad: await daiFabContract.dad_(),
-            mom: await daiFabContract.mom_(),
-            vox: await daiFabContract.vox_(),
-            tub: await daiFabContract.tub_(),
-            tap: await daiFabContract.tap_(),
-            top: await daiFabContract.top_(),
-        };
-        await this.generateAddressMappingFile(deployedContractAddresses);
+        // test -z $SAI_PIT && SAI_PIT="0x0000000000000000000000000000000000000123"
+        const saiPitContract = new GemPit(this.connector, this.accountManager, await this.simpleDeploy("GemPit"), this.connector.gasPrice);
+        return {saiAdmContract, saiPitContract};
+    }
+
+    private async deployFeeds() {
+        // test -z $SAI_PIP && PIPtx=$(dapp create DSValue)
+        const saiPipContract = new DSValue(this.connector, this.accountManager, await this.simpleDeploy("DSValue"), this.connector.gasPrice)
+        saiPipContract.poke( this.defaultEthPriceInUsd )
+
+        // test -z $SAI_PEP && PEPtx=$(dapp create DSValue)
+        const saiPepContract = new DSValue(this.connector, this.accountManager, await this.simpleDeploy("DSValue"), this.connector.gasPrice)
+        saiPepContract.poke( this.defaultMakerPriceInUsd )
+
+        return {saiPipContract, saiPepContract};
+    }
+
+    private async deployTokens() {
+        // test -z $SAI_GEM && GEMtx=$(dapp create DSToken $(seth --to-bytes32 $(seth --from-ascii 'ETH')))
+        const saiGemContract = new WETH9(this.connector, this.accountManager, await this.simpleDeploy("WETH9"), this.connector.gasPrice);
+
+        // test -z $SAI_GOV && GOVtx=$(dapp create DSToken $(seth --to-bytes32 $(seth --from-ascii 'GOV')))
+        const saiGovContract = new DSToken(this.connector, this.accountManager, await this.simpleDeploy("DSToken", [stringTo32ByteHex("GOV")]), this.connector.gasPrice)
+        return {saiGemContract, saiGovContract};
+    }
+
+    private async deployDaiFab() {
+        const gemFabContract = new GemFab(this.connector, this.accountManager, await this.simpleDeploy("GemFab"), this.connector.gasPrice);
+        const voxFabContract = new VoxFab(this.connector, this.accountManager, await this.simpleDeploy("VoxFab"), this.connector.gasPrice);
+        const tubFabContract = new TubFab(this.connector, this.accountManager, await this.simpleDeploy("TubFab"), this.connector.gasPrice);
+        const tapFabContract = new TapFab(this.connector, this.accountManager, await this.simpleDeploy("TapFab"), this.connector.gasPrice);
+        const topFabContract = new TopFab(this.connector, this.accountManager, await this.simpleDeploy("TopFab"), this.connector.gasPrice);
+        const momFabContract = new MomFab(this.connector, this.accountManager, await this.simpleDeploy("MomFab"), this.connector.gasPrice);
+        const dadFabContract = new DadFab(this.connector, this.accountManager, await this.simpleDeploy("DadFab"), this.connector.gasPrice);
+
+        // DAI_FAB=$(dapp create DaiFab $GEM_FAB $VOX_FAB $TUB_FAB $TAP_FAB $TOP_FAB $MOM_FAB $DAD_FAB)
+        const daiFabAddress = await this.simpleDeploy("DaiFab", [
+            gemFabContract.address,
+            voxFabContract.address,
+            tubFabContract.address,
+            tapFabContract.address,
+            topFabContract.address,
+            momFabContract.address,
+            dadFabContract.address,
+        ]);
+        return new DaiFab(this.connector, this.accountManager, daiFabAddress, this.connector.gasPrice);
     }
 
     private async simpleDeploy(contractName: string, constructorArgs?: Array<any>): Promise<string> {
@@ -186,19 +239,17 @@ Deploying to: ${networkConfiguration.networkName}
         return receipt.contractAddress;
     }
 
-    private async generateAddressMapping(contractAddressMapping: ContractAddressMapping): Promise<string> {
-        const networkId = await this.connector.ethjsQuery.net_version();
-        let addressMapping: NetworkAddressMapping = {};
-        if (await exists(this.configuration.contractAddressesOutputPath)) {
-            let existingAddressFileData: string = await readFile(this.configuration.contractAddressesOutputPath, 'utf8');
-            addressMapping = JSON.parse(existingAddressFileData);
-        }
-        addressMapping[networkId] = contractAddressMapping;
-        return JSON.stringify(addressMapping, null, ' ');
+    private async generateAddressMappingEnvFile(contractAddressMapping: ContractAddressMapping): Promise<string> {
+        return `ETHEREUM_OASIS_ADDRESS=${contractAddressMapping.oasisDex}\n` +
+            `ETHEREUM_MAKER_ADRESS=${contractAddressMapping.tub}\n`;
+
     }
 
-    private async generateAddressMappingFile(contractAddressMapping: ContractAddressMapping): Promise<void> {
-        const addressMappingJson = await this.generateAddressMapping(contractAddressMapping);
-        await writeFile(this.configuration.contractAddressesOutputPath, addressMappingJson, 'utf8')
+    private async generateAddressMappingFiles(contractAddressMapping: ContractAddressMapping): Promise<void> {
+        const addressMappingJson = JSON.stringify(contractAddressMapping, null, ' ');;
+        const addressMappingEnvVars = await this.generateAddressMappingEnvFile(contractAddressMapping);
+        await writeFile(this.configuration.contractAddressesOutputPathJson, addressMappingJson, 'utf8')
+        await writeFile(this.configuration.contractAddressesOutputPathEnvFile, addressMappingEnvVars, 'utf8')
+        console.log(addressMappingEnvVars)
     }
 }

@@ -147,6 +147,7 @@ ${contractMethods.join("\n\n")}
         switch (abiType) {
             case 'uint8':
             case 'uint64':
+            case 'uint128':
             case 'uint256':
             case 'int256': {
                 return 'BN';
