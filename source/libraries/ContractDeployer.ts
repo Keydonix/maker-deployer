@@ -28,6 +28,9 @@ import BN = require("bn.js");
 
 type ContractAddressMapping = { [name: string]: string };
 
+type VoxTubAddresses = {
+};
+
 export class ContractDeployer {
     private readonly accountManager: AccountManager;
     private readonly configuration: DeployerConfiguration;
@@ -36,6 +39,7 @@ export class ContractDeployer {
 
     private readonly defaultEthPriceInUsd   = "0x0000000000000000000000000000000000000000000000200000000000000000";
     private readonly defaultMakerPriceInUsd = "0x00000000000000000000000000000000000000000000002a0000000000000000";
+
 
     public static deployToNetwork = async (networkConfiguration: NetworkConfiguration, deployerConfiguration: DeployerConfiguration) => {
         const connector = new Connector(networkConfiguration);
@@ -68,20 +72,14 @@ Deploying to: ${networkConfiguration.networkName}
 
         const daiFabContract = await this.deployDaiFab();
 
-        // seth send $DAI_FAB 'makeTokens()
-        console.log("DaiFab.makeTokens()");
-        await daiFabContract.makeTokens();
-
-        // seth send $DAI_FAB 'makeVoxTub(address,address,address,address,address)' $SAI_GEM $SAI_GOV $SAI_PIP $SAI_PEP $SAI_PIT
-        console.log("DaiFab.makeVoxTub()");
-        await daiFabContract.makeVoxTub(
+        await this.deployConfigureDaiFab(daiFabContract,
+            saiAdmContract,
             saiGemContract.address,
             saiGovContract.address,
             saiPipContract.address,
             saiPepContract.address,
             saiPitContract.address,
-        );
-        await this.deployConfigureDaiFab(daiFabContract, saiAdmContract);
+    );
         const odContract = await this.deployOasisdex(saiGemContract.address, await daiFabContract.sai_());
 
         await saiGemContract.deposit({attachedEth: new BN(40).mul(ETHER)})
@@ -110,7 +108,7 @@ Deploying to: ${networkConfiguration.networkName}
             tub: await daiFabContract.tub_(),
             oasisDex: odContract.address,
         };
-        await this.generateAddressMappingFile(deployedContractAddresses);
+        await this.generateAddressMappingFiles(deployedContractAddresses);
     }
 
     private async deployOasisdex(gemAddress: string, daiAddress: string) {
@@ -119,7 +117,21 @@ Deploying to: ${networkConfiguration.networkName}
         return odContract;
     }
 
-    private async deployConfigureDaiFab(daiFabContract: DaiFab, saiAdmContract: DSRoles) {
+    private async deployConfigureDaiFab(daiFabContract: DaiFab,
+                                        saiAdmContract: DSRoles,
+                                        gem: string,
+                                        gov: string,
+                                        pip: string,
+                                        pep: string,
+                                        pit: string) {
+        // seth send $DAI_FAB 'makeTokens()
+        console.log("DaiFab.makeTokens()");
+        await daiFabContract.makeTokens();
+
+        // seth send $DAI_FAB 'makeVoxTub(address,address,address,address,address)' $SAI_GEM $SAI_GOV $SAI_PIP $SAI_PEP $SAI_PIT
+        console.log("DaiFab.makeVoxTub()");
+        await daiFabContract.makeVoxTub(gem, gov, pip, pep, pit);
+
         // seth send $DAI_FAB 'makeTapTop()'
         console.log("DaiFab.makeTapTop()");
         await daiFabContract.makeTapTop();
@@ -155,10 +167,11 @@ Deploying to: ${networkConfiguration.networkName}
         // test -z $SAI_PIP && PIPtx=$(dapp create DSValue)
         const saiPipContract = new DSValue(this.connector, this.accountManager, await this.simpleDeploy("DSValue"), this.connector.gasPrice)
         saiPipContract.poke( this.defaultEthPriceInUsd )
+
         // test -z $SAI_PEP && PEPtx=$(dapp create DSValue)
         const saiPepContract = new DSValue(this.connector, this.accountManager, await this.simpleDeploy("DSValue"), this.connector.gasPrice)
-
         saiPipContract.poke( this.defaultMakerPriceInUsd )
+
         return {saiPipContract, saiPepContract};
     }
 
@@ -234,10 +247,11 @@ Deploying to: ${networkConfiguration.networkName}
 
     }
 
-    private async generateAddressMappingFile(contractAddressMapping: ContractAddressMapping): Promise<void> {
+    private async generateAddressMappingFiles(contractAddressMapping: ContractAddressMapping): Promise<void> {
         const addressMappingJson = JSON.stringify(contractAddressMapping, null, ' ');;
-        const addressMappingEnvFile = await this.generateAddressMappingEnvFile(contractAddressMapping);
+        const addressMappingEnvVars = await this.generateAddressMappingEnvFile(contractAddressMapping);
         await writeFile(this.configuration.contractAddressesOutputPathJson, addressMappingJson, 'utf8')
-        await writeFile(this.configuration.contractAddressesOutputPathEnvFile, addressMappingEnvFile, 'utf8')
+        await writeFile(this.configuration.contractAddressesOutputPathEnvFile, addressMappingEnvVars, 'utf8')
+        console.log(addressMappingEnvVars)
     }
 }
