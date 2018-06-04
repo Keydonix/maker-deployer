@@ -79,7 +79,7 @@ Deploying to: ${networkConfiguration.networkName}
             saiPipContract.address,
             saiPepContract.address,
             saiPitContract.address,
-    );
+        );
         const odContract = await this.deployOasisdex(saiGemContract.address, await daiFabContract.sai_());
 
         await this.openCdp(saiGemContract, daiFabContract);
@@ -112,7 +112,6 @@ Deploying to: ${networkConfiguration.networkName}
     }
 
     private async openCdp(saiGemContract: WETH9, daiFabContract: DaiFab) {
-
         await saiGemContract.deposit({attachedEth: new BN(40).mul(ETHER)})
 
         const tub = new SaiTub(this.connector, this.accountManager, await daiFabContract.tub_(), this.connector.gasPrice);
@@ -127,8 +126,7 @@ Deploying to: ${networkConfiguration.networkName}
 
         const cupId = "0x" + "1".padStart(64, '0');
 
-        console.log(`CUP details (${cupId})`);
-        console.log(await tub.cups_(cupId));
+        console.log(`CDP "lad":`, (await tub.cups_(cupId))[0]);
 
         console.log("Approving WETH and PETH");
         await saiGemContract.approve(tub.address, MAX_APPROVAL)
@@ -136,7 +134,7 @@ Deploying to: ${networkConfiguration.networkName}
 
         console.log("Join (convert WETH to PETH)");
         await tub.join(new BN(40).mul(ETHER));
-        console.log("PETH Balance:", await skr.balanceOf_(this.accountManager.defaultAddress).toString());
+        console.log("PETH Balance:", (await skr.balanceOf_(this.accountManager.defaultAddress)).toString(10));
 
         console.log("Lock (store PETH inside tub)");
         await tub.lock(cupId, new BN(40).mul(ETHER));
@@ -144,7 +142,7 @@ Deploying to: ${networkConfiguration.networkName}
         console.log("Draw DAI");
         await tub.draw(cupId, new BN(400).mul(ETHER));
 
-        console.log("DAI Balance:", await dai.balanceOf_(this.accountManager.defaultAddress).toString());
+        console.log("DAI Balance:", (await dai.balanceOf_(this.accountManager.defaultAddress)).toString(10));
     }
 
     private async deployOasisdex(gemAddress: string, daiAddress: string) {
