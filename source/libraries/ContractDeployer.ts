@@ -22,13 +22,14 @@ import {
     DSRoles,
     DSValue,
     MatchingMarket,
-    GemPit
+    GemPit, SaiTub, SaiMom
 } from "./ContractInterfaces";
 import BN = require("bn.js");
 
 type ContractAddressMapping = { [name: string]: string };
 
 const ETHER = new BN(10).pow(new BN(18));
+const MAX_APPROVAL = new BN("2").pow(new BN(256)).sub(new BN(1));
 
 export class ContractDeployer {
     private readonly accountManager: AccountManager;
@@ -81,7 +82,7 @@ Deploying to: ${networkConfiguration.networkName}
     );
         const odContract = await this.deployOasisdex(saiGemContract.address, await daiFabContract.sai_());
 
-        await saiGemContract.deposit({attachedEth: new BN(40).mul(ETHER)})
+        await this.openCdp(saiGemContract, daiFabContract);
 
         console.log({
             gem: saiGemContract.address,
@@ -108,6 +109,42 @@ Deploying to: ${networkConfiguration.networkName}
             oasisDex: odContract.address,
         };
         await this.generateAddressMappingFiles(deployedContractAddresses);
+    }
+
+    private async openCdp(saiGemContract: WETH9, daiFabContract: DaiFab) {
+
+        await saiGemContract.deposit({attachedEth: new BN(40).mul(ETHER)})
+
+        const tub = new SaiTub(this.connector, this.accountManager, await daiFabContract.tub_(), this.connector.gasPrice);
+        const skr = new DSToken(this.connector, this.accountManager, await daiFabContract.skr_(), this.connector.gasPrice);
+        const mom = new SaiMom(this.connector, this.accountManager, await daiFabContract.mom_(), this.connector.gasPrice);
+        const dai = new DSToken(this.connector, this.accountManager, await daiFabContract.sai_(), this.connector.gasPrice);
+
+        await mom.setCap(new BN(50000000).mul(ETHER));
+
+        console.log("Opening CDP");
+        await tub.open();
+
+        const cupId = "0x" + "1".padStart(64, '0');
+
+        console.log(`CUP details (${cupId})`);
+        console.log(await tub.cups_(cupId));
+
+        console.log("Approving WETH and PETH");
+        await saiGemContract.approve(tub.address, MAX_APPROVAL)
+        await skr.approve(tub.address, MAX_APPROVAL)
+
+        console.log("Join (convert WETH to PETH)");
+        await tub.join(new BN(40).mul(ETHER));
+        console.log("PETH Balance:", await skr.balanceOf_(this.accountManager.defaultAddress).toString());
+
+        console.log("Lock (store PETH inside tub)");
+        await tub.lock(cupId, new BN(40).mul(ETHER));
+
+        console.log("Draw DAI");
+        await tub.draw(cupId, new BN(400).mul(ETHER));
+
+        console.log("DAI Balance:", await dai.balanceOf_(this.accountManager.defaultAddress).toString());
     }
 
     private async deployOasisdex(gemAddress: string, daiAddress: string) {
