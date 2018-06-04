@@ -37,7 +37,7 @@ export class ContractDeployer {
     private readonly connector: Connector;
     private readonly contracts: Contracts;
 
-    private readonly defaultEthPriceInUsd   = "0x0000000000000000000000000000000000000000000000200000000000000000";
+    private readonly defaultEthPriceInUsd = "0x0000000000000000000000000000000000000000000000200000000000000000";
     private readonly defaultMakerPriceInUsd = "0x00000000000000000000000000000000000000000000002a0000000000000000";
 
 
@@ -200,11 +200,11 @@ Deploying to: ${networkConfiguration.networkName}
     private async deployFeeds() {
         // test -z $SAI_PIP && PIPtx=$(dapp create DSValue)
         const saiPipContract = new DSValue(this.connector, this.accountManager, await this.simpleDeploy("DSValue"), this.connector.gasPrice)
-        saiPipContract.poke( this.defaultEthPriceInUsd )
+        saiPipContract.poke(this.defaultEthPriceInUsd)
 
         // test -z $SAI_PEP && PEPtx=$(dapp create DSValue)
         const saiPepContract = new DSValue(this.connector, this.accountManager, await this.simpleDeploy("DSValue"), this.connector.gasPrice)
-        saiPepContract.poke( this.defaultMakerPriceInUsd )
+        saiPepContract.poke(this.defaultMakerPriceInUsd)
 
         return {saiPipContract, saiPepContract};
     }
@@ -281,7 +281,7 @@ Deploying to: ${networkConfiguration.networkName}
     }
 
     private async generateAddressMappingFiles(contractAddressMapping: ContractAddressMapping): Promise<void> {
-        const addressMappingJson = JSON.stringify(contractAddressMapping, null, ' ');;
+        const addressMappingJson = JSON.stringify(contractAddressMapping, null, ' ');
         const addressMappingEnvVars = await this.generateAddressMappingEnvFile(contractAddressMapping);
         await writeFile(this.configuration.contractAddressesOutputPathJson, addressMappingJson, 'utf8')
         await writeFile(this.configuration.contractAddressesOutputPathEnvFile, addressMappingEnvVars, 'utf8')
