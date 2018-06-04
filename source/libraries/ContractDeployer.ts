@@ -1,6 +1,6 @@
 import { readFile, writeFile } from "async-file";
 import { encodeParams } from 'ethjs-abi';
-import { stringTo32ByteHex } from "./HelperFunctions";
+import { bnTo32ByteHex, stringTo32ByteHex } from "./HelperFunctions";
 import { CompilerOutput } from "solc";
 import { Abi, AbiEvent, AbiFunction } from 'ethereum';
 import { DeployerConfiguration } from './DeployerConfiguration';
@@ -39,8 +39,8 @@ export class ContractDeployer {
     private readonly connector: Connector;
     private readonly contracts: Contracts;
 
-    private readonly defaultEthPriceInUsd = "0x0000000000000000000000000000000000000000000000200000000000000000";
-    private readonly defaultMakerPriceInUsd = "0x00000000000000000000000000000000000000000000002a0000000000000000";
+    private readonly defaultEthPriceInUsd = bnTo32ByteHex(new BN(600).mul(ETHER));
+    private readonly defaultMakerPriceInUsd = bnTo32ByteHex(new BN(800).mul(ETHER));;
 
 
     public static deployToNetwork = async (networkConfiguration: NetworkConfiguration, deployerConfiguration: DeployerConfiguration) => {
@@ -126,7 +126,7 @@ Deploying to: ${networkConfiguration.networkName}
         console.log("Opening CDP");
         await tub.open();
 
-        const cupId = "0x" + "1".padStart(64, '0');
+        const cupId = bnTo32ByteHex(new BN(1));
 
         console.log(`CDP "lad":`, (await tub.cups_(cupId))[0]);
 
