@@ -22,7 +22,9 @@ import {
     DSRoles,
     DSValue,
     MatchingMarket,
-    GemPit, SaiTub, SaiMom
+    GemPit,
+    SaiTub,
+    SaiMom,
 } from "./ContractInterfaces";
 import BN = require("bn.js");
 
