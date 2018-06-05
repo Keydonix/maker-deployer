@@ -1,4 +1,4 @@
-FROM keydonix/parity-instantseal-node8:safe
+FROM keydonix/parity-instantseal-node8 as builder
 # TODO: stop using :safe once we get real deploy of fixed instantseal
 # TODO: use digest
 
@@ -15,3 +15,9 @@ WORKDIR /maker-docker-poa
 RUN /maker-docker-poa/scripts/run-parity-and-deploy.sh
 
 WORKDIR /
+
+
+FROM keydonix/parity-instantseal
+COPY --from=builder /parity/chains /parity/chains
+
+# docker image build . -t keydonix/parity-instantseal-maker

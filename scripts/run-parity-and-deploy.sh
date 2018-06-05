@@ -1,7 +1,9 @@
 #!/bin/bash
 
+set -e
+
 cd /
-./start.sh &
+/parity/parity --config /parity/config.toml &
 
 cd /maker-docker-poa
 
