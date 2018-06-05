@@ -20,4 +20,4 @@ WORKDIR /
 FROM keydonix/parity-instantseal
 COPY --from=builder /parity/chains /parity/chains
 
-# docker image build . -t parity-instantseal-maker
+# docker image build . -t keydonix/parity-instantseal-maker
