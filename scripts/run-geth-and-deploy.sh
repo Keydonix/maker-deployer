@@ -1,9 +1,10 @@
 #!/bin/bash
+# TODO: generalize this so parity/geth share most logic
 
 set -e
 
 cd /
-/parity/parity --config /parity/config.toml &
+./start.sh &
 
 cd /maker-deployer
 
@@ -15,4 +16,4 @@ node output/tools/generateContractInterfaces.js
 
 node output/deployment/deployContracts.js
 
-kill -TERM $(pidof parity)
+kill -TERM $(pidof geth)

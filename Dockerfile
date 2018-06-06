@@ -1,5 +1,4 @@
 FROM keydonix/parity-instantseal-node8 as builder
-# TODO: stop using :safe once we get real deploy of fixed instantseal
 # TODO: use digest
 
 # TODO: vendor
@@ -8,11 +7,11 @@ RUN apt-get update && apt-get -y install software-properties-common git make && 
 	apt-get update && \
 	apt-get install -y solc
 
-COPY . /maker-docker-poa
+COPY . /maker-deployer
 
-WORKDIR /maker-docker-poa
+WORKDIR /maker-deployer
 
-RUN /maker-docker-poa/scripts/run-parity-and-deploy.sh
+RUN /maker-deployer/scripts/run-parity-and-deploy.sh
 
 WORKDIR /
 

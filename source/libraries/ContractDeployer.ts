@@ -55,7 +55,6 @@ Deploying to: ${networkConfiguration.networkName}
     compiled contracts: ${deployerConfiguration.contractInputPath}
     contract address: ${deployerConfiguration.contractAddressesOutputPathJson}
     contract address env: ${deployerConfiguration.contractAddressesOutputPathEnvFile}
-    upload blocks #s: ${deployerConfiguration.uploadBlockNumbersOutputPath}
 `);
         await contractDeployer.deploy();
     };
