@@ -3,11 +3,11 @@ FROM keydonix/geth-poa-node8-solc as builder
 
 RUN apk update && apk add git
 
-COPY . /maker-docker-poa
+COPY . /maker-deployer
 
-WORKDIR /maker-docker-poa
+WORKDIR /maker-deployer
 
-RUN /maker-docker-poa/scripts/run-geth-and-deploy.sh
+RUN /maker-deployer/scripts/run-geth-and-deploy.sh
 
 WORKDIR /
 
