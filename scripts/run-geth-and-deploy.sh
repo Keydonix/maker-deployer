@@ -6,7 +6,7 @@ set -e
 cd /
 ./start.sh &
 
-cd /maker-docker-poa
+cd /maker-deployer
 
 npm install
 npx tsc

@@ -5,7 +5,7 @@ set -e
 cd /
 /parity/parity --config /parity/config.toml &
 
-cd /maker-docker-poa
+cd /maker-deployer
 
 npm install
 npx tsc

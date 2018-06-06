@@ -1,8 +1,6 @@
 FROM keydonix/geth-poa-node8-solc as builder
 # TODO: use digest
 
-RUN apk update && apk add git
-
 COPY . /maker-deployer
 
 WORKDIR /maker-deployer
