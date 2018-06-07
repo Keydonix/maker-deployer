@@ -1,4 +1,4 @@
-FROM keydonix/geth-poa-node8-solc as builder
+FROM keydonix/geth-clique-node8-solc as builder
 # TODO: use digest
 
 COPY . /maker-deployer
@@ -10,7 +10,7 @@ RUN /maker-deployer/scripts/run-geth-and-deploy.sh
 WORKDIR /
 
 
-FROM keydonix/geth-poa
+FROM keydonix/geth-clique
 COPY --from=builder /geth/chain /geth/chain
 
 # docker image build . -t keydonix/geth-poa-maker
