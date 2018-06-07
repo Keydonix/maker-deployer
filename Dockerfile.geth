@@ -13,4 +13,4 @@ WORKDIR /
 FROM keydonix/geth-clique
 COPY --from=builder /geth/chain /geth/chain
 
-# docker image build . -t keydonix/geth-poa-maker
+# docker image build . -t keydonix/geth-clique-maker
