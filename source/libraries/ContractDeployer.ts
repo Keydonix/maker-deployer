@@ -40,7 +40,7 @@ export class ContractDeployer {
     private readonly contracts: Contracts;
 
     private readonly defaultEthPriceInUsd = bnTo32ByteHex(new BN(600).mul(ETHER));
-    private readonly defaultMakerPriceInUsd = bnTo32ByteHex(new BN(800).mul(ETHER));;
+    private readonly defaultMakerPriceInUsd = bnTo32ByteHex(new BN(800).mul(ETHER));
 
 
     public static deployToNetwork = async (networkConfiguration: NetworkConfiguration, deployerConfiguration: DeployerConfiguration) => {
@@ -81,7 +81,8 @@ Deploying to: ${networkConfiguration.networkName}
             saiPepContract.address,
             saiPitContract.address,
         );
-        const odContract = await this.deployOasisdex(saiGemContract.address, await daiFabContract.sai_());
+
+        const odContract = await this.deployOasisdex(saiGemContract, await daiFabContract.sai_());
 
         await this.openCdp(saiGemContract, daiFabContract);
 
@@ -141,14 +142,20 @@ Deploying to: ${networkConfiguration.networkName}
         await tub.lock(cupId, new BN(40).mul(ETHER));
 
         console.log("Draw DAI");
-        await tub.draw(cupId, new BN(400).mul(ETHER));
+        await tub.draw(cupId, new BN(4000).mul(ETHER));
 
         console.log("DAI Balance:", (await dai.balanceOf_(this.accountManager.defaultAddress)).toString(10));
     }
 
-    private async deployOasisdex(gemAddress: string, daiAddress: string) {
-        const odContract = new MatchingMarket(this.connector, this.accountManager, await this.simpleDeploy("MatchingMarket"), this.connector.gasPrice)
-        await odContract.addTokenPairWhitelist(gemAddress, daiAddress);
+    private async deployOasisdex(gemContract: WETH9, daiAddress: string) {
+        const daiContract = new DSToken(this.connector, this.accountManager, daiAddress, this.connector.gasPrice);
+
+        const odContract = new MatchingMarket(this.connector, this.accountManager, await this.simpleDeploy("MatchingMarket", [1545134400]), this.connector.gasPrice)
+        await odContract.addTokenPairWhitelist(gemContract.address, daiAddress);
+
+        await daiContract.approve(odContract.address, MAX_APPROVAL);
+        await gemContract.approve(odContract.address, MAX_APPROVAL);
+
         return odContract;
     }
 
