@@ -148,14 +148,6 @@ Deploying to: ${networkConfiguration.networkName}
         await tub.draw(cupId, new BN(500000).mul(ETHER));
 
         console.log("DAI Balance:", (await dai.balanceOf_(this.accountManager.defaultAddress)).toString(10));
-
-      await tub.drip();
-      await tub.drip();
-      await tub.drip();
-      await tub.drip();
-      await tub.drip();
-      await tub.drip();
-      await tub.drip();
     }
 
     private async deployOasisdex(gemContract: WETH9, daiAddress: string) {
