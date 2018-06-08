@@ -114,7 +114,6 @@ Deploying to: ${networkConfiguration.networkName}
     }
 
     private async openCdp(saiGemContract: WETH9, daiFabContract: DaiFab) {
-        await saiGemContract.deposit({attachedEth: new BN(40).mul(ETHER)})
 
         const tub = new SaiTub(this.connector, this.accountManager, await daiFabContract.tub_(), this.connector.gasPrice);
         const skr = new DSToken(this.connector, this.accountManager, await daiFabContract.skr_(), this.connector.gasPrice);
@@ -128,23 +127,35 @@ Deploying to: ${networkConfiguration.networkName}
 
         const cupId = bnTo32ByteHex(new BN(1));
 
-        console.log(`CDP "lad":`, (await tub.cups_(cupId))[0]);
+      console.log(`CDP "lad":`, (await tub.cups_(cupId))[0]);
+      console.log(`CDP "tab":`, (await tub.tab_(cupId)));
 
-        console.log("Approving WETH and PETH");
+      console.log("Depositing into WETH")
+      await saiGemContract.deposit({attachedEth: new BN(10000).mul(ETHER)})
+
+      console.log("Approving WETH and PETH");
         await saiGemContract.approve(tub.address, MAX_APPROVAL)
         await skr.approve(tub.address, MAX_APPROVAL)
 
         console.log("Join (convert WETH to PETH)");
-        await tub.join(new BN(40).mul(ETHER));
+        await tub.join(new BN(5000).mul(ETHER));
         console.log("PETH Balance:", (await skr.balanceOf_(this.accountManager.defaultAddress)).toString(10));
 
         console.log("Lock (store PETH inside tub)");
-        await tub.lock(cupId, new BN(40).mul(ETHER));
+        await tub.lock(cupId, new BN(5000).mul(ETHER));
 
         console.log("Draw DAI");
-        await tub.draw(cupId, new BN(4000).mul(ETHER));
+        await tub.draw(cupId, new BN(500000).mul(ETHER));
 
         console.log("DAI Balance:", (await dai.balanceOf_(this.accountManager.defaultAddress)).toString(10));
+
+      await tub.drip();
+      await tub.drip();
+      await tub.drip();
+      await tub.drip();
+      await tub.drip();
+      await tub.drip();
+      await tub.drip();
     }
 
     private async deployOasisdex(gemContract: WETH9, daiAddress: string) {
