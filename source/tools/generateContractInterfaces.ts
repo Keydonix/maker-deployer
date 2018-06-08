@@ -6,15 +6,15 @@ import { CompilerConfiguration } from '../libraries/CompilerConfiguration';
 import { ContractInterfaceGenerator } from '../libraries/ContractInterfacesGenerator';
 
 async function doWork(): Promise<void> {
-    const configuration = await CompilerConfiguration.create();
-    const compiler: ContractCompiler = new ContractCompiler(configuration);
-    const interfacesGenerator: ContractInterfaceGenerator = new ContractInterfaceGenerator(configuration, compiler);
-    await interfacesGenerator.generateContractInterfaces();
+	const configuration = await CompilerConfiguration.create();
+	const compiler: ContractCompiler = new ContractCompiler(configuration);
+	const interfacesGenerator: ContractInterfaceGenerator = new ContractInterfaceGenerator(configuration, compiler);
+	await interfacesGenerator.generateContractInterfaces();
 }
 
 doWork().then(() => {
-    process.exit();
+	process.exit();
 }).catch(error => {
-    console.log(error);
-    process.exit(1);
+	console.log(error);
+	process.exit(1);
 });
