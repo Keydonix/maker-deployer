@@ -9,7 +9,7 @@ cd /maker-deployer
 
 npm install
 npx tsc
-./fetch-sai-contracts.sh
+./fetch-contracts.sh
 node output/deployment/compileContracts.js
 node output/tools/generateContractInterfaces.js
 
