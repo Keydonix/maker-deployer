@@ -152,9 +152,7 @@ Deploying to: ${networkConfiguration.networkName}
 	private async deployOasisdex(gemContract: WETH9, daiAddress: string) {
 		const daiContract = new DSToken(this.connector, this.accountManager, daiAddress, this.connector.gasPrice);
 
-		const odContract = new MatchingMarket(this.connector, this.accountManager, await this.simpleDeploy("MatchingMarket", [1545134400]), this.connector.gasPrice)
-		await odContract.addTokenPairWhitelist(gemContract.address, daiAddress);
-
+		const odContract = new MatchingMarket(this.connector, this.accountManager, await this.simpleDeploy("MatchingMarket", [1639742400]), this.connector.gasPrice)
 		await daiContract.approve(odContract.address, MAX_APPROVAL);
 		await gemContract.approve(odContract.address, MAX_APPROVAL);
 
