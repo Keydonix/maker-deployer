@@ -25,6 +25,7 @@ import {
 	GemPit,
 	SaiTub,
 	SaiMom,
+	DSProxyFactory,
 } from "./ContractInterfaces";
 import BN = require("bn.js");
 
@@ -84,6 +85,8 @@ Deploying to: ${networkConfiguration.networkName}
 
 		const odContract = await this.deployOasisdex(saiGemContract, await daiFabContract.sai_());
 
+		const proxyRegistryContract = await this.deployProxyRegistry();
+
 		await this.openCdp(saiGemContract, daiFabContract);
 
 		console.log({
@@ -109,8 +112,13 @@ Deploying to: ${networkConfiguration.networkName}
 		const deployedContractAddresses = {
 			tub: await daiFabContract.tub_(),
 			oasisDex: odContract.address,
+			proxyRegistry: proxyRegistryContract.address,
 		};
 		await this.generateAddressMappingFiles(deployedContractAddresses);
+	}
+
+	private async deployProxyRegistry() {
+		return new DSProxyFactory(this.connector, this.accountManager, await this.simpleDeploy("DSProxyFactory", []), this.connector.gasPrice)
 	}
 
 	private async openCdp(saiGemContract: WETH9, daiFabContract: DaiFab) {
@@ -160,12 +168,12 @@ Deploying to: ${networkConfiguration.networkName}
 	}
 
 	private async deployConfigureDaiFab(daiFabContract: DaiFab,
-																			saiAdmContract: DSRoles,
-																			gem: string,
-																			gov: string,
-																			pip: string,
-																			pep: string,
-																			pit: string) {
+			saiAdmContract: DSRoles,
+			gem: string,
+			gov: string,
+			pip: string,
+			pep: string,
+			pit: string) {
 		// seth send $DAI_FAB 'makeTokens()
 		console.log("DaiFab.makeTokens()");
 		await daiFabContract.makeTokens();
@@ -284,8 +292,8 @@ Deploying to: ${networkConfiguration.networkName}
 
 	private async generateAddressMappingEnvFile(contractAddressMapping: ContractAddressMapping): Promise<string> {
 		return `ETHEREUM_OASIS_ADDRESS=${contractAddressMapping.oasisDex}\n` +
-			`ETHEREUM_MAKER_ADRESS=${contractAddressMapping.tub}\n`;
-
+			`ETHEREUM_MAKER_ADRESS=${contractAddressMapping.tub}\n` +
+			`ETHEREUM_PROXY_REGISTRY=${contractAddressMapping.proxyRegistry}\n`;
 	}
 
 	private async generateAddressMappingFiles(contractAddressMapping: ContractAddressMapping): Promise<void> {
