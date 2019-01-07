@@ -21,11 +21,13 @@
     "compileAndDeploy": "npm run fetch:sai && node output/deployment/compileAndDeploy.js",
     "clean": "rimraf output",
     "clean-start": "npm run clean && npm run build",
-    "docker:build": "docker build . -t keydonix/maker-docker-poa",
+    "docker:build": "npm run docker:build:parity && npm run docker:build:geth",
+    "docker:build:parity": "docker build -f Dockerfile.parity . -t keydonix/maker-docker-poa",
+    "docker:build:geth": "docker build -f Dockerfile.geth . -t keydonix/maker-docker-poa",
     "preversion": "npm run build",
     "version": "git add source/libraries/ContractInterfaces.ts",
     "release": "npm version prerelease && npm publish",
-    "fetch:sai": "bash fetch-sai-contracts.sh"
+    "fetch:sai": "bash fetch-contracts.sh"
   },
   "dependencies": {
     "@types/mkdirp": "0.5.2",
