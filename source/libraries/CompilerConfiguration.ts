@@ -21,7 +21,7 @@ export class CompilerConfiguration {
         const contractSourceRoot = path.join(__dirname, "../../source/contracts/");
         const outputRoot = (typeof process.env.OUTPUT_PATH === "undefined") ? path.join(__dirname, "../../output/contracts/") : path.normalize(<string> process.env.OUTPUT_ROOT);
         // TODO: Feels overly specific to put it here, put it one level up
-        const activeContracts = ["sai/fab.sol", "sai/mom.sol", "sai/pit.sol", "sai/tap.sol", "sai/top.sol", "sai/tub.sol", "sai/vox.sol", "sai/weth9.sol", "ds-token/token.sol", "ds-value/value.sol", "ds-roles/roles.sol", "maker-otc/matching_market.sol", "ds-proxy/proxy.sol"];
+        const activeContracts = ["sai/fab.sol", "sai/mom.sol", "sai/pit.sol", "sai/tap.sol", "sai/top.sol", "sai/tub.sol", "sai/vox.sol", "sai/weth9.sol", "ds-token/token.sol", "ds-value/value.sol", "ds-roles/roles.sol", "maker-otc/matching_market.sol", "ds-proxy/proxy.sol", "proxy-registry/ProxyRegistry.sol"];
         return new CompilerConfiguration(contractSourceRoot, outputRoot, activeContracts);
     }
 }
