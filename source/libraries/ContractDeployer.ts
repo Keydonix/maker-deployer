@@ -25,7 +25,7 @@ import {
 	GemPit,
 	SaiTub,
 	SaiMom,
-	DSProxyFactory, ProxyRegistry,
+	ProxyRegistry,
 } from "./ContractInterfaces";
 import BN = require("bn.js");
 
