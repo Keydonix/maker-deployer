@@ -26,6 +26,7 @@ import {
 	SaiTub,
 	SaiMom,
 	ProxyRegistry,
+	DSProxyFactory,
 } from "./ContractInterfaces";
 import BN = require("bn.js");
 
@@ -118,7 +119,8 @@ Deploying to: ${networkConfiguration.networkName}
 	}
 
 	private async deployProxyRegistry() {
-		return new ProxyRegistry(this.connector, this.accountManager, await this.simpleDeploy("ProxyRegistry", []), this.connector.gasPrice)
+		const proxyFactoryContract = new DSProxyFactory(this.connector, this.accountManager, await this.simpleDeploy("DSProxyFactory", []), this.connector.gasPrice);
+		return new ProxyRegistry(this.connector, this.accountManager, await this.simpleDeploy("ProxyRegistry", [proxyFactoryContract.address]), this.connector.gasPrice)
 	}
 
 	private async openCdp(saiGemContract: WETH9, daiFabContract: DaiFab) {
