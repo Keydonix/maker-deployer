@@ -25,7 +25,7 @@ import {
 	GemPit,
 	SaiTub,
 	SaiMom,
-	DSProxyFactory,
+	DSProxyFactory, ProxyRegistry,
 } from "./ContractInterfaces";
 import BN = require("bn.js");
 
@@ -118,7 +118,7 @@ Deploying to: ${networkConfiguration.networkName}
 	}
 
 	private async deployProxyRegistry() {
-		return new DSProxyFactory(this.connector, this.accountManager, await this.simpleDeploy("DSProxyFactory", []), this.connector.gasPrice)
+		return new ProxyRegistry(this.connector, this.accountManager, await this.simpleDeploy("ProxyRegistry", []), this.connector.gasPrice)
 	}
 
 	private async openCdp(saiGemContract: WETH9, daiFabContract: DaiFab) {
