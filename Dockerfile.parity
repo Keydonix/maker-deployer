@@ -17,7 +17,7 @@ WORKDIR /
 
 
 FROM keydonix/parity-instantseal
-COPY --from=builder /parity/chains /parity/chains
+COPY --from=builder /home/parity/chains /home/parity/chains
 
 COPY --from=builder /maker-deployer/output/contracts /contracts
 
