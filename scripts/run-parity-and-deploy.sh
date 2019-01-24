@@ -3,7 +3,7 @@
 set -e
 
 cd /
-/parity/parity --config /parity/config.toml &
+/home/parity/bin/parity --config /home/parity/config.toml &
 
 cd /maker-deployer
 
