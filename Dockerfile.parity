@@ -21,4 +21,9 @@ COPY --from=builder /home/parity/chains /home/parity/chains
 
 COPY --from=builder /maker-deployer/output/contracts /contracts
 
+USER root
+RUN chown -R parity /home/parity
+
+USER parity
+
 # docker image build . -t keydonix/parity-instantseal-maker
